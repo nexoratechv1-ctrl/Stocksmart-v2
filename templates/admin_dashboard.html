@@ -1,1 +1,232 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-crown"></i> 
+        {% if lang == 'sw' %}
+            Dashibodi ya Msimamizi
+        {% else %}
+            Admin Dashboard
+        {% endif %}
+    </h2>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ total_users }}</h3>
+                    <p>{% if lang == 'sw' %}Watumiaji{% else %}Users{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-store fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ total_shops }}</h3>
+                    <p>{% if lang == 'sw' %}Maduka{% else %}Shops{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ total_sales_all }}</h3>
+                    <p>{% if lang == 'sw' %}Mauzo Yote{% else %}Total Sales{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-money-bill-wave fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ currency }} {{ total_revenue_all|round(0) }}</h3>
+                    <p>{% if lang == 'sw' %}Mapato Yote{% else %}Total Revenue{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                <i class="fas fa-users"></i> {% if lang == 'sw' %}Watumiaji{% else %}Users{% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="shops-tab" data-bs-toggle="tab" data-bs-target="#shops" type="button" role="tab">
+                <i class="fas fa-store"></i> {% if lang == 'sw' %}Maduka{% else %}Shops{% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="help-tab" data-bs-toggle="tab" data-bs-target="#help" type="button" role="tab">
+                <i class="fas fa-headset"></i> {% if lang == 'sw' %}Ujumbe wa Msaada{% else %}Help Messages{% endif %}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-list"></i> {% if lang == 'sw' %}Orodha ya Watumiaji{% else %}User List{% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{% if lang == 'sw' %}Jina la Mtumiaji{% else %}Username{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Barua Pepe{% else %}Email{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Simu{% else %}Phone{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Nchi{% else %}Country{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Jukumu{% else %}Role{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Tarehe ya Kujiunga{% else %}Joined{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Vitendo{% else %}Actions{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or '-' }}</td>
+                                    <td>{{ user.country }}</td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                            <span class="badge bg-success">Admin</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">User</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if not user.is_admin %}
+                                            <a href="{{ url_for('admin_promote_user', user_id=user.id) }}" class="btn btn-sm btn-warning" onclick="return confirm('{% if lang == "sw" %}Una hakika kumfanya msimamizi?{% else %}Make this user an admin?{% endif %}')">
+                                                <i class="fas fa-crown"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('admin_delete_user', user_id=user.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('{% if lang == "sw" %}Una hakika kufuta mtumiaji huyu? Tendo hili haliwezi kubatilishwa.{% else %}Delete this user permanently?{% endif %}')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shops Tab -->
+        <div class="tab-pane fade" id="shops" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-store"></i> {% if lang == 'sw' %}Orodha ya Maduka Yote{% else %}All Shops{% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{% if lang == 'sw' %}Jina la Duka{% else %}Shop Name{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Mmiliki{% else %}Owner{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Eneo{% else %}Location{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Hali{% else %}Status{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Tarehe{% else %}Created{% endif %}</th>
+                                    <th>{% if lang == 'sw' %}Vitendo{% else %}Actions{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops %}
+                                <tr>
+                                    <td>{{ shop.id }}</td>
+                                    <td>{{ shop.name }}</td>
+                                    <td>{{ shop.owner.username if shop.owner else 'Deleted' }}</td>
+                                    <td>{{ shop.location or '-' }}</td>
+                                    <td>
+                                        {% if shop.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin_toggle_shop', shop_id=shop.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas {% if shop.is_active %}fa-ban{% else %}fa-check-circle{% endif %}"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin_delete_shop', shop_id=shop.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('{% if lang == "sw" %}Una hakika kufuta duka hili? Bidhaa na mauzo yote yatafutwa.{% else %}Delete this shop? All products and sales will be lost.{% endif %}')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Messages Tab -->
+        <div class="tab-pane fade" id="help" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-envelope"></i> {% if lang == 'sw' %}Ujumbe wa Hivi Karibuni{% else %}Recent Help Messages{% endif %}</span>
+                    <a href="{{ url_for('admin_help') }}" class="btn btn-sm btn-light">
+                        {% if lang == 'sw' %}Tazama Yote{% else %}View All{% endif %} <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if help_messages %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{% if lang == 'sw' %}Mtumiaji{% else %}User{% endif %}</th>
+                                        <th>{% if lang == 'sw' %}Mada{% else %}Subject{% endif %}</th>
+                                        <th>{% if lang == 'sw' %}Ujumbe{% else %}Message{% endif %}</th>
+                                        <th>{% if lang == 'sw' %}Hali{% else %}Status{% endif %}</th>
+                                        <th>{% if lang == 'sw' %}Tarehe{% else %}Date{% endif %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for msg in help_messages %}
+                                    <tr>
+                                        <td>{{ msg.user.username if msg.user else 'Deleted' }}</td>
+                                        <td>{{ msg.subject }}</td>
+                                        <td>{{ msg.message|truncate(50) }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if msg.status == 'unread' %}bg-danger
+                                                {% elif msg.status == 'read' %}bg-warning text-dark
+                                                {% else %}bg-success{% endif %}">
+                                                {{ msg.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ msg.created_at.strftime('%d/%m/%Y') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">{% if lang == 'sw' %}Hakuna ujumbe wa msaada bado.{% else %}No help messages yet.{% endif %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
