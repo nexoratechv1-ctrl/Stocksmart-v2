@@ -648,3 +648,70 @@ def export_sales_pdf(shop_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=sales_report_{shop.name}_{start}_{end}.pdf'
     return response
+# ==================== ADMIN DASHBOARD ====================
+@app.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    total_users = User.query.count()
+    total_shops = Shop.query.count()
+    total_sales_all = Sale.query.count()
+    total_revenue_all = db.session.query(db.func.sum(Sale.total_amount)).scalar() or 0
+    users = User.query.order_by(User.created_at.desc()).all()
+    shops = Shop.query.order_by(Shop.created_at.desc()).all()
+    help_messages = HelpMessage.query.order_by(HelpMessage.created_at.desc()).limit(10).all()
+    return render_template('admin_dashboard.html',
+                         total_users=total_users,
+                         total_shops=total_shops,
+                         total_sales_all=total_sales_all,
+                         total_revenue_all=total_revenue_all,
+                         users=users,
+                         shops=shops,
+                         help_messages=help_messages)
+
+@app.route('/admin/promote/<int:user_id>')
+@login_required
+@admin_required
+def admin_promote_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot promote yourself.', 'danger')
+    else:
+        user.is_admin = True
+        db.session.commit()
+        flash(f'User {user.username} is now an admin.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_user/<int:user_id>')
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot delete yourself.', 'danger')
+    else:
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/toggle_shop/<int:shop_id>')
+@login_required
+@admin_required
+def admin_toggle_shop(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    shop.is_active = not shop.is_active
+    db.session.commit()
+    status = 'activated' if shop.is_active else 'deactivated'
+    flash(f'Shop {shop.name} has been {status}.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_shop/<int:shop_id>')
+@login_required
+@admin_required
+def admin_delete_shop(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    db.session.delete(shop)
+    db.session.commit()
+    flash('Shop deleted.', 'success')
+    return redirect(url_for('admin_dashboard'))
