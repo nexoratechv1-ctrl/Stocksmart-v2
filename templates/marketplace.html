@@ -1,1 +1,104 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-store"></i> 
+        {% if lang == 'sw' %}
+            Soko Kuu - Tafuta Maduka na Bidhaa
+        {% else %}
+            Marketplace - Find Shops & Products
+        {% endif %}
+    </h2>
+
+    <!-- Search and Filter Row -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" id="searchInput" class="form-control" 
+                           placeholder="{% if lang == 'sw' %}Tafuta bidhaa...{% else %}Search products...{% endif %}">
+                </div>
+                <div class="col-md-3">
+                    <select id="countryFilter" class="form-select">
+                        <option value="all">{% if lang == 'sw' %}Nchi zote{% else %}All countries{% endif %}</option>
+                        {% for country in COUNTRIES.keys() %}
+                            <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button id="searchBtn" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> {% if lang == 'sw' %}Tafuta{% else %}Search{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shops Grid -->
+    <div id="shopsContainer">
+        <div class="row" id="shopsGrid">
+            {% for shop in shops %}
+            <div class="col-md-4 mb-4 shop-card" data-country="{{ shop.owner.country if shop.owner else '' }}">
+                <div class="card h-100 shop-card">
+                    <img src="{{ shop.image_url or 'https://via.placeholder.com/300x200?text=Shop' }}" class="card-img-top" alt="{{ shop.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ shop.name }}</h5>
+                        <p class="card-text">{{ shop.description|truncate(100) }}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ shop.location or 'No location' }}</p>
+                        <p><i class="fas fa-phone"></i> {{ shop.phone or 'No phone' }}</p>
+                        <p><i class="fas fa-flag"></i> {{ shop.owner.country if shop.owner else 'Unknown' }}</p>
+                        <a href="{{ url_for('view_shop', shop_id=shop.id) }}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> {% if lang == 'sw' %}Tembelea Duka{% else %}Visit Shop{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i> 
+                    {% if lang == 'sw' %}Hakuna maduka yaliyopatikana.{% else %}No shops found.{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search and filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const countryFilter = document.getElementById('countryFilter');
+    const searchBtn = document.getElementById('searchBtn');
+    const shopsGrid = document.getElementById('shopsGrid');
+
+    function filterShops() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedCountry = countryFilter.value;
+        
+        const cards = document.querySelectorAll('#shopsGrid .shop-card');
+        cards.forEach(card => {
+            const shopCountry = card.getAttribute('data-country');
+            const shopName = card.querySelector('.card-title').innerText.toLowerCase();
+            const shopDesc = card.querySelector('.card-text').innerText.toLowerCase();
+            
+            let matchesCountry = (selectedCountry === 'all' || shopCountry === selectedCountry);
+            let matchesSearch = (searchTerm === '' || shopName.includes(searchTerm) || shopDesc.includes(searchTerm));
+            
+            if (matchesCountry && matchesSearch) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    searchBtn.addEventListener('click', filterShops);
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterShops();
+    });
+    countryFilter.addEventListener('change', filterShops);
+</script>
+{% endblock %}
