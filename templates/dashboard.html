@@ -1,1 +1,182 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-tachometer-alt"></i> 
+            {% if lang == 'sw' %}
+                Dashibodi Yako
+            {% else %}
+                Your Dashboard
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('create_shop') }}" class="btn btn-success">
+            <i class="fas fa-plus-circle"></i> 
+            {% if lang == 'sw' %}
+                Unda Duka Jipya
+            {% else %}
+                Create New Shop
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Stats Cards (example, you can compute real stats in the backend) -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-store fa-2x mb-2" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ shops|length }}</h3>
+                    <p>
+                        {% if lang == 'sw' %}
+                            Maduka Yako
+                        {% else %}
+                            Your Shops
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-boxes fa-2x mb-2" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ total_products|default(0) }}</h3>
+                    <p>
+                        {% if lang == 'sw' %}
+                            Jumla ya Bidhaa
+                        {% else %}
+                            Total Products
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x mb-2" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ total_sales|default(0) }}</h3>
+                    <p>
+                        {% if lang == 'sw' %}
+                            Mauzo Yote
+                        {% else %}
+                            Total Sales
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shops List -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 
+                {% if lang == 'sw' %}
+                    Orodha ya Maduka Yako
+                {% else %}
+                    Your Shops List
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if shops %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>
+                                    {% if lang == 'sw' %}Jina la Duka{% else %}Shop Name{% endif %}
+                                </th>
+                                <th>
+                                    {% if lang == 'sw' %}Maelezo{% else %}Description{% endif %}
+                                </th>
+                                <th>
+                                    {% if lang == 'sw' %}Eneo{% else %}Location{% endif %}
+                                </th>
+                                <th>
+                                    {% if lang == 'sw' %}Vitendo{% else %}Actions{% endif %}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for shop in shops %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ shop.name }}</td>
+                                <td>{{ shop.description|truncate(50) }}</td>
+                                <td>{{ shop.location }}</td>
+                                <td>
+                                    <a href="{{ url_for('manage_shop', shop_id=shop.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> 
+                                        {% if lang == 'sw' %}Simamia{% else %}Manage{% endif %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i> 
+                    {% if lang == 'sw' %}
+                        Hujabuni duka lolote. Bonyeza kitufe cha "Unda Duka Jipya" kuanza.
+                    {% else %}
+                        You haven't created any shop yet. Click "Create New Shop" to get started.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Additional Links (optional) -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>
+                        <i class="fas fa-chart-line"></i> 
+                        {% if lang == 'sw' %}Ripoti na Takwimu{% else %}Reports & Analytics{% endif %}
+                    </h5>
+                    <p>
+                        {% if lang == 'sw' %}
+                            Angalia mauzo, faida, na utabiri wa AI kwa kila duka.
+                        {% else %}
+                            View sales, profits, and AI forecasts per shop.
+                        {% endif %}
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        {% if lang == 'sw' %}Tembelea Ripoti{% else %}View Reports{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>
+                        <i class="fas fa-question-circle"></i> 
+                        {% if lang == 'sw' %}Usaidizi{% else %}Help & Support{% endif %}
+                    </h5>
+                    <p>
+                        {% if lang == 'sw' %}
+                            Una shida? Tuma ujumbe kwa msimamizi.
+                        {% else %}
+                            Having issues? Send a message to the admin.
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('helpdesk') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-headset"></i> 
+                        {% if lang == 'sw' %}Wasiliana Nasi{% else %}Contact Support{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
