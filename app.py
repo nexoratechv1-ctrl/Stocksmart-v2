@@ -531,3 +531,120 @@ def anomaly_history(shop_id):
         return redirect(url_for('dashboard'))
     anomalies = AnomalyLog.query.filter_by(shop_id=shop.id).order_by(AnomalyLog.date.desc()).all()
     return render_template('anomaly_history.html', shop=shop, anomalies=anomalies)
+# ==================== MARKETPLACE & SEARCH ====================
+@app.route('/marketplace')
+def marketplace():
+    shops = Shop.query.filter_by(is_active=True).all()
+    return render_template('marketplace.html', shops=shops, COUNTRIES=COUNTRIES)
+
+@app.route('/search')
+def search():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return redirect(url_for('marketplace'))
+    products = Product.query.join(Shop).filter(
+        (Product.name.ilike(f'%{query}%')) | (Product.description.ilike(f'%{query}%')),
+        Shop.is_active == True
+    ).limit(50).all()
+    currency = get_currency(current_user.country) if current_user.is_authenticated else 'TZS'
+    return render_template('search_results.html', products=products, query=query, currency=currency)
+
+@app.route('/shop/view/<int:shop_id>')
+def view_shop(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    products = Product.query.filter_by(shop_id=shop.id).all()
+    currency = get_currency(current_user.country) if current_user.is_authenticated else 'TZS'
+    return render_template('view_shop.html', shop=shop, products=products, currency=currency)
+
+# ==================== HELPDESK ====================
+@app.route('/helpdesk', methods=['GET', 'POST'])
+@login_required
+def helpdesk():
+    if request.method == 'POST':
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        hm = HelpMessage(user_id=current_user.id, subject=subject, message=message)
+        db.session.add(hm)
+        db.session.commit()
+        flash('Message sent to admin. You will be contacted soon.', 'success')
+        return redirect(url_for('helpdesk'))
+    messages = HelpMessage.query.filter_by(user_id=current_user.id).order_by(HelpMessage.created_at.desc()).all()
+    return render_template('helpdesk.html', messages=messages)
+
+@app.route('/admin/help')
+@login_required
+@admin_required
+def admin_help():
+    messages = HelpMessage.query.order_by(HelpMessage.created_at.desc()).all()
+    return render_template('admin_help.html', messages=messages)
+
+@app.route('/admin/reply_message/<int:message_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_reply_message(message_id):
+    msg = HelpMessage.query.get_or_404(message_id)
+    msg.response = request.form.get('response')
+    msg.status = request.form.get('status')
+    db.session.commit()
+    flash('Reply sent and status updated.', 'success')
+    return redirect(url_for('admin_help'))
+
+@app.route('/admin/delete_message/<int:message_id>')
+@login_required
+@admin_required
+def admin_delete_message(message_id):
+    msg = HelpMessage.query.get_or_404(message_id)
+    db.session.delete(msg)
+    db.session.commit()
+    flash('Message deleted.', 'success')
+    return redirect(url_for('admin_help'))
+
+# ==================== SNAKE GAME ====================
+@app.route('/snake')
+def snake_game():
+    return render_template('snake.html')
+
+# ==================== PDF EXPORT ====================
+@app.route('/shop/<int:shop_id>/export_sales_pdf')
+@login_required
+def export_sales_pdf(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id and not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    filter_type = request.args.get('filter', 'today')
+    today_date = date.today()
+    if filter_type == 'today':
+        start = end = today_date
+    elif filter_type == 'week':
+        start = today_date - timedelta(days=today_date.weekday())
+        end = today_date
+    elif filter_type == 'month':
+        start = today_date.replace(day=1)
+        end = today_date
+    elif filter_type == 'custom':
+        start = datetime.strptime(request.args.get('start'), '%Y-%m-%d').date() if request.args.get('start') else today_date
+        end = datetime.strptime(request.args.get('end'), '%Y-%m-%d').date() if request.args.get('end') else today_date
+    else:
+        start = end = today_date
+    sales = Sale.query.filter_by(shop_id=shop.id).filter(
+        db.func.date(Sale.created_at) >= start,
+        db.func.date(Sale.created_at) <= end
+    ).order_by(Sale.created_at).all()
+    total_amount = sum(s.total_amount for s in sales)
+    total_profit = sum(s.profit for s in sales)
+    rendered = render_template('sales_pdf.html',
+                             shop=shop,
+                             sales=sales,
+                             total_amount=total_amount,
+                             total_profit=total_profit,
+                             start_date=start.strftime('%d/%m/%Y'),
+                             end_date=end.strftime('%d/%m/%Y'),
+                             generation_date=datetime.now().strftime('%d/%m/%Y %H:%M'),
+                             currency=get_currency(current_user.country),
+                             lang=get_language(current_user.country))
+    pdf = HTML(string=rendered).write_pdf()
+    response = app.make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=sales_report_{shop.name}_{start}_{end}.pdf'
+    return response
