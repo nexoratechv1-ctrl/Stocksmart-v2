@@ -1,1 +1,62 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-search"></i> 
+            {% if lang == 'sw' %}
+                Matokeo ya Utafutaji: "{{ query }}"
+            {% else %}
+                Search Results: "{{ query }}"
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 
+            {% if lang == 'sw' %}Rudi Sokoni{% else %}Back to Marketplace{% endif %}
+        </a>
+    </div>
+
+    {% if products %}
+        <div class="row">
+            {% for product in products %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/300x200?text=Product" class="card-img-top" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description|truncate(80) if product.description else '' }}</p>
+                        <p><strong>{{ currency }} {{ product.price|round(0) }}</strong> / {{ product.unit }}</p>
+                        <p>
+                            <i class="fas fa-store"></i> 
+                            {% if lang == 'sw' %}Duka:{% else %}Shop:{% endif %} 
+                            <a href="{{ url_for('view_shop', shop_id=product.shop.id) }}">{{ product.shop.name }}</a>
+                        </p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ product.shop.location or 'No location' }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('view_shop', shop_id=product.shop.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> 
+                            {% if lang == 'sw' %}Tembelea Duka{% else %}Visit Shop{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle"></i> 
+            {% if lang == 'sw' %}
+                Hakuna bidhaa zilizopatikana kwa utafutaji wako. Jaribu maneno mengine.
+            {% else %}
+                No products found for your search. Try different keywords.
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
