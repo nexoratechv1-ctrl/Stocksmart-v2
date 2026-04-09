@@ -123,3 +123,92 @@ class HelpMessage(db.Model):
     status = db.Column(db.String(20), default='unread')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('help_messages', lazy=True))
+# ==================== HELPERS ====================
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Access denied. Admin only.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated
+
+def get_tax_rate(country):
+    return COUNTRIES.get(country, {}).get('tax_rate', 0.18)
+
+def get_currency(country):
+    return COUNTRIES.get(country, {}).get('currency', 'TZS')
+
+def get_language(country):
+    return COUNTRIES.get(country, {}).get('language', 'en')
+
+@app.context_processor
+def inject_globals():
+    lang = 'en'
+    tax_name = 'TRA'
+    tax_rate = 0.18
+    currency = 'TZS'
+    if current_user.is_authenticated:
+        country = current_user.country
+        lang = get_language(country)
+        tax_name = COUNTRIES.get(country, {}).get('tax_name', 'TRA')
+        tax_rate = COUNTRIES.get(country, {}).get('tax_rate', 0.18)
+        currency = COUNTRIES.get(country, {}).get('currency', 'TZS')
+    return dict(lang=lang, tax_name=tax_name, tax_rate=tax_rate, currency=currency, COUNTRIES=COUNTRIES)
+
+# ==================== ANOMALY DETECTION ====================
+def detect_anomalies(shop_id):
+    end_date = date.today()
+    start_date = end_date - timedelta(30)
+    sales = Sale.query.filter_by(shop_id=shop_id).filter(Sale.created_at >= start_date).all()
+    if len(sales) < 7:
+        return
+    daily = {}
+    for s in sales:
+        d = s.created_at.date()
+        daily[d] = daily.get(d, 0) + s.total_amount
+    arr = [daily.get(end_date - timedelta(i), 0) for i in range(30)]
+    mean = np.mean(arr)
+    std = np.std(arr)
+    if std == 0:
+        return
+    today_sales = daily.get(end_date, 0)
+    z = (today_sales - mean) / std
+    if abs(z) > 1.5:
+        typ = 'spike' if today_sales > mean else 'drop'
+        existing = AnomalyLog.query.filter_by(shop_id=shop_id, date=end_date).first()
+        if not existing:
+            log = AnomalyLog(
+                shop_id=shop_id,
+                date=end_date,
+                anomaly_type=typ,
+                severity=abs(z),
+                expected_sales=mean,
+                actual_sales=today_sales,
+                notes=f"{typ} detected. Expected ~{mean:.0f} got {today_sales:.0f}"
+            )
+            db.session.add(log)
+            db.session.commit()
+
+# ==================== AI FORECAST ====================
+def train_sales_model(shop_id):
+    sales = Sale.query.filter_by(shop_id=shop_id).all()
+    if len(sales) < 7:
+        return None, None
+    data = {}
+    for s in sales:
+        d = s.created_at.strftime('%Y-%m-%d')
+        data[d] = data.get(d, 0) + s.total_amount
+    df = pd.DataFrame(list(data.items()), columns=['date', 'sales'])
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.sort_values('date')
+    df['day_num'] = (df['date'] - df['date'].min()).dt.days
+    X = df[['day_num']].values
+    y = df['sales'].values
+    model = LinearRegression()
+    model.fit(X, y)
+    return model, df['date'].max()
