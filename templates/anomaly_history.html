@@ -1,1 +1,105 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-chart-line"></i> 
+            {% if lang == 'sw' %}
+                Historia ya Matukio yasiyo ya Kawaida - {{ shop.name }}
+            {% else %}
+                Anomaly History - {{ shop.name }}
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('manage_shop', shop_id=shop.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 
+            {% if lang == 'sw' %}Rudi kwa Duka{% else %}Back to Shop{% endif %}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-list"></i> 
+            {% if lang == 'sw' %}
+                Matukio Yote Yanayotambuliwa na AI
+            {% else %}
+                All AI‑Detected Anomalies
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if anomalies %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if lang == 'sw' %}Tarehe{% else %}Date{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Aina{% else %}Type{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Mauzo Yanayotarajiwa ({{ currency }}){% else %}Expected Sales ({{ currency }}){% endif %}</th>
+                                <th>{% if lang == 'sw' %}Mauzo Halisi ({{ currency }}){% else %}Actual Sales ({{ currency }}){% endif %}</th>
+                                <th>{% if lang == 'sw' %}Ukali (Z-score){% else %}Severity (Z‑score){% endif %}</th>
+                                <th>{% if lang == 'sw' %}Maelezo{% else %}Notes{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anomaly in anomalies %}
+                            <tr>
+                                <td>{{ anomaly.date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    {% if anomaly.anomaly_type == 'drop' %}
+                                        <span class="badge bg-danger">
+                                            {% if lang == 'sw' %}Kushuka{% else %}Drop{% endif %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">
+                                            {% if lang == 'sw' %}Kupanda{% else %}Spike{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ currency }} {{ anomaly.expected_sales|round(0) }}</td>
+                                <td>{{ currency }} {{ anomaly.actual_sales|round(0) }}</td>
+                                <td>{{ anomaly.severity|round(1) }}</td>
+                                <td>{{ anomaly.notes }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success text-center">
+                    <i class="fas fa-check-circle"></i> 
+                    {% if lang == 'sw' %}
+                        Hakuna matukio yasiyo ya kawaida yaliyorekodiwa. Mauzo yako yana tabia thabiti.
+                    {% else %}
+                        No anomalies recorded. Your sales are behaving normally.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Explanation Card -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <i class="fas fa-question-circle"></i> 
+            {% if lang == 'sw' %}
+                Anomaly ni nini?
+            {% else %}
+                What is an anomaly?
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <p>
+                {% if lang == 'sw' %}
+                    Anomaly ni tofauti kubwa ya mauzo (kushuka au kupanda) ikilinganishwa na historia ya siku 30 zilizopita.
+                    Mfumo wa AI hutumia njia ya kukokotoa Z‑score ili kutambua matukio yasiyo ya kawaida. Hii inakusaidia kugundua
+                    matatizo (kama bidhaa kuisha) au fursa (kama bidhaa inayouzika sana) kwa wakati.
+                {% else %}
+                    An anomaly is a significant deviation in sales (drop or spike) compared to the 30‑day sales history.
+                    The AI uses a Z‑score calculation to detect unusual events. This helps you identify problems (e.g., stockouts)
+                    or opportunities (e.g., a popular product) in time.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
