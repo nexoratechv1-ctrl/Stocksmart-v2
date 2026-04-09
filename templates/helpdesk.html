@@ -1,1 +1,116 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-headset"></i> 
+        {% if lang == 'sw' %}
+            Msaada na Mawasiliano
+        {% else %}
+            Help & Support
+        {% endif %}
+    </h2>
+
+    <div class="row">
+        <!-- Message Form -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-paper-plane"></i> 
+                    {% if lang == 'sw' %}
+                        Tuma Ujumbe kwa Msimamizi
+                    {% else %}
+                        Send a Message to Admin
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('helpdesk') }}">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-tag"></i> 
+                                {% if lang == 'sw' %}
+                                    Kichwa / Mada
+                                {% else %}
+                                    Subject / Title
+                                {% endif %}
+                            </label>
+                            <input type="text" name="subject" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-comment-dots"></i> 
+                                {% if lang == 'sw' %}
+                                    Maelezo ya Tatizo / Swali
+                                {% else %}
+                                    Message / Details
+                                {% endif %}
+                            </label>
+                            <textarea name="message" rows="5" class="form-control" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> 
+                            {% if lang == 'sw' %}Tuma{% else %}Send{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Previous Messages List -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-history"></i> 
+                    {% if lang == 'sw' %}
+                        Ujumbe Wako Uliohitaji Msaada
+                    {% else %}
+                        Your Support Messages
+                    {% endif %}
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    {% if messages %}
+                        <ul class="list-group list-group-flush">
+                            {% for msg in messages %}
+                            <li class="list-group-item bg-transparent">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong>{{ msg.subject }}</strong>
+                                    <span class="badge 
+                                        {% if msg.status == 'unread' %}bg-danger
+                                        {% elif msg.status == 'read' %}bg-warning text-dark
+                                        {% else %}bg-success{% endif %}">
+                                        {% if lang == 'sw' %}
+                                            {% if msg.status == 'unread' %}Haijasomwa
+                                            {% elif msg.status == 'read' %}Imesomwa
+                                            {% else %}Imesuluhishwa{% endif %}
+                                        {% else %}
+                                            {{ msg.status }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <p class="mt-2 mb-1">{{ msg.message|truncate(100) }}</p>
+                                <small class="text-muted">{{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                {% if msg.response %}
+                                    <div class="mt-2 p-2 bg-light text-dark rounded">
+                                        <i class="fas fa-reply"></i> 
+                                        {% if lang == 'sw' %}Jibu:{% else %}Reply:{% endif %} {{ msg.response }}
+                                    </div>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center text-muted">
+                            <i class="fas fa-inbox"></i> 
+                            {% if lang == 'sw' %}
+                                Hujatuma ujumbe wowote. Tuma swali lako la kwanza.
+                            {% else %}
+                                No messages sent yet. Send your first inquiry.
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
