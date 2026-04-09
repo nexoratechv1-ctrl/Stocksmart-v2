@@ -212,3 +212,72 @@ def train_sales_model(shop_id):
     model = LinearRegression()
     model.fit(X, y)
     return model, df['date'].max()
+# ==================== PUBLIC ROUTES ====================
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        phone = request.form['phone']
+        country = request.form['country']
+        password = request.form['password']
+        confirm = request.form['confirm_password']
+        if password != confirm:
+            flash('Passwords do not match', 'danger')
+            return redirect(url_for('register'))
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists', 'danger')
+            return redirect(url_for('register'))
+        user = User(username=username, email=email, phone=phone, country=country)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful! Please login.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', countries=COUNTRIES.keys())
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            flash(f'Welcome back, {user.username}!', 'success')
+            return redirect(url_for('dashboard'))
+        flash('Invalid credentials', 'danger')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logged out.', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/set_country/<country>')
+def set_country(country):
+    if current_user.is_authenticated:
+        current_user.country = country
+        db.session.commit()
+    else:
+        session['country'] = country
+    return redirect(request.referrer or url_for('index'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    shops = Shop.query.filter_by(owner_id=current_user.id).all()
+    total_products = 0
+    total_sales = 0
+    for shop in shops:
+        total_products += Product.query.filter_by(shop_id=shop.id).count()
+        total_sales += db.session.query(db.func.sum(Sale.total_amount)).filter(Sale.shop_id==shop.id).scalar() or 0
+    return render_template('dashboard.html', shops=shops, total_products=total_products, total_sales=total_sales)
