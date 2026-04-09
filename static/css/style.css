@@ -1,1 +1,376 @@
+/* ========== MULTISTORE - PREMIUM GLOWING THEME ========== */
+/* Enhanced glassmorphism, neon accents, smooth animations – text fully visible */
 
+:root {
+    --bg-deep: #050b14;
+    --bg-card: rgba(10, 20, 35, 0.85);
+    --neon-cyan: #00f3ff;
+    --neon-gold: #ffd966;
+    --text-white: #ffffff;
+    --text-light: #f0f3f8;
+    --shadow-cyan: 0 0 10px rgba(0, 243, 255, 0.5);
+    --shadow-gold: 0 0 10px rgba(255, 217, 102, 0.5);
+    --border-cyan: rgba(0, 243, 255, 0.4);
+    --border-gold: rgba(255, 217, 102, 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', 'Poppins', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-white);
+    line-height: 1.6;
+    overflow-x: hidden;
+    letter-spacing: 0.3px;
+}
+
+/* ========== ANIMATED GRADIENT BACKGROUND ========== */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 10%, #0a1a2f, #03070f);
+    z-index: -2;
+}
+
+.animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(125deg, #0a1a2f, #1E3A5F, #2C5F7A, #1E3A5F);
+    background-size: 400% 400%;
+    animation: moveGradient 18s ease infinite;
+    opacity: 0.4;
+}
+
+@keyframes moveGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ========== TEXT & HEADINGS (FULLY VISIBLE) ========== */
+h1, h2, h3, h4, h5, h6, .card-title, .navbar-brand, .footer h5, .text-gold {
+    color: var(--neon-gold) !important;
+    text-shadow: 0 0 5px rgba(255, 217, 102, 0.4);
+    font-weight: 700;
+}
+
+p, li, span, div, .card-text, .form-label, .table, .alert, .nav-link, .btn, .footer p, .footer a {
+    color: var(--text-white) !important;
+}
+
+a {
+    color: var(--neon-cyan) !important;
+    transition: var(--transition-smooth);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--neon-gold) !important;
+    text-shadow: var(--shadow-cyan);
+}
+
+/* ========== NAVBAR (GLASS + NEON) ========== */
+.navbar {
+    background: rgba(5, 11, 20, 0.95);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--neon-cyan);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 0.8rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.7rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    text-shadow: none;
+}
+
+.navbar-brand:hover {
+    text-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.nav-link {
+    font-weight: 500;
+    margin: 0 6px;
+    transition: var(--transition-smooth);
+}
+
+.nav-link:hover {
+    color: var(--neon-cyan) !important;
+    transform: translateY(-2px);
+    text-shadow: 0 0 6px var(--neon-cyan);
+}
+
+/* ========== CARDS (GLASS + NEON BORDER) ========== */
+.card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-cyan);
+    border-radius: 24px;
+    transition: var(--transition-smooth);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    border-color: var(--neon-gold);
+    box-shadow: 0 15px 35px rgba(0, 243, 255, 0.2), 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+.card-title {
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ========== BUTTONS (GLOWING) ========== */
+.btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-info {
+    border-radius: 60px;
+    padding: 8px 24px;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(95deg, #0a2a3b, #0e3a4f);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(95deg, #0e3a4f, #145c6e);
+    box-shadow: 0 0 12px var(--neon-cyan);
+    transform: scale(1.02);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--neon-cyan);
+    background: transparent;
+    color: var(--neon-cyan);
+    border-radius: 60px;
+    padding: 6px 20px;
+}
+
+.btn-outline-primary:hover {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 12px var(--neon-cyan);
+}
+
+.btn-success {
+    background: linear-gradient(95deg, #0f5c3e, #1b8c5a);
+}
+
+.btn-success:hover {
+    box-shadow: 0 0 12px #2ecc71;
+    transform: scale(1.02);
+}
+
+.btn-danger {
+    background: linear-gradient(95deg, #8b0000, #c0392b);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 0 12px #e74c3c;
+    transform: scale(1.02);
+}
+
+/* ========== FORMS & INPUTS ========== */
+.form-control, .form-select {
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid var(--border-cyan);
+    border-radius: 20px;
+    padding: 12px 18px;
+    color: var(--text-white);
+    transition: var(--transition-smooth);
+}
+
+.form-control:focus, .form-select:focus {
+    background: #0a1420;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 14px var(--neon-cyan);
+    color: white;
+}
+
+.form-control::placeholder, .form-select::placeholder {
+    color: #b0c4de;
+    opacity: 1;
+}
+
+label {
+    color: var(--neon-cyan);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* ========== TABLES ========== */
+.table {
+    color: var(--text-white);
+    border-color: rgba(0, 243, 255, 0.3);
+}
+
+.table thead th {
+    color: var(--neon-cyan);
+    border-bottom: 2px solid var(--neon-cyan);
+    font-weight: 600;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(0, 243, 255, 0.05);
+}
+
+/* ========== DASHBOARD CARDS (STATS) ========== */
+.dashboard-card {
+    text-align: center;
+    padding: 20px;
+    border-left: 4px solid var(--neon-cyan);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+}
+
+.dashboard-card i {
+    font-size: 2.2rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px var(--neon-cyan);
+    margin-bottom: 10px;
+}
+
+.dashboard-card h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 0 6px rgba(0, 243, 255, 0.5);
+}
+
+/* ========== MARKETPLACE / SHOP CARDS ========== */
+.shop-card, .product-card {
+    transition: var(--transition-smooth);
+}
+
+.shop-card:hover, .product-card:hover {
+    transform: translateY(-5px);
+}
+
+/* ========== SNAKE GAME CANVAS ========== */
+#snakeCanvas {
+    background-color: #0a0a0a;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    border-radius: 12px;
+}
+
+/* ========== BADGES & ALERTS ========== */
+.badge {
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+.alert {
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.85);
+    border-left: 6px solid;
+    backdrop-filter: blur(8px);
+    color: #fff;
+}
+
+.alert-success { border-left-color: #2ecc71; }
+.alert-danger { border-left-color: #e74c3c; }
+.alert-warning { border-left-color: var(--neon-gold); }
+.alert-info { border-left-color: var(--neon-cyan); }
+
+/* ========== FOOTER ========== */
+.footer {
+    background: rgba(5, 11, 20, 0.95);
+    border-top: 1px solid var(--neon-cyan);
+    margin-top: 60px;
+    padding: 25px 0;
+    font-size: 0.9rem;
+}
+
+.footer a {
+    color: var(--neon-cyan);
+}
+
+.footer a:hover {
+    text-shadow: 0 0 6px var(--neon-cyan);
+}
+
+/* ========== DARK MODE LIGHT OVERRIDES ========== */
+body.light-mode {
+    --bg-deep: #f5f7fa;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --text-white: #1a1a2e;
+    --text-light: #2c3e50;
+    background: #f0f2f5;
+}
+
+body.light-mode .card {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a2e;
+}
+
+body.light-mode .navbar {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom-color: var(--neon-cyan);
+}
+
+body.light-mode .nav-link {
+    color: #1a1a2e !important;
+}
+
+body.light-mode .form-control {
+    background: white;
+    color: #1a1a2e;
+}
+
+body.light-mode .table {
+    color: #1a1a2e;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 992px) {
+    .navbar-brand { font-size: 1.3rem; }
+    .dashboard-card h3 { font-size: 1.5rem; }
+    .card-title { font-size: 1.2rem; }
+}
+
+@media (max-width: 768px) {
+    .btn { padding: 6px 16px; font-size: 0.85rem; }
+    .table { font-size: 0.85rem; }
+    .form-control { padding: 10px 12px; }
+    .container { padding-left: 12px; padding-right: 12px; }
+}
+
+/* ========== CUSTOM SCROLLBAR ========== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0a1420;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-gold);
+                                 }
