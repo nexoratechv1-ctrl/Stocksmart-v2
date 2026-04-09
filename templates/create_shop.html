@@ -1,1 +1,115 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-store"></i> 
+                    {% if lang == 'sw' %}
+                        Unda Duka Lako
+                    {% else %}
+                        Create Your Shop
+                    {% endif %}
+                </h2>
+                
+                <form method="POST" action="{{ url_for('create_shop') }}">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i> 
+                            {% if lang == 'sw' %}
+                                Jina la Duka
+                            {% else %}
+                                Shop Name
+                            {% endif %}
+                        </label>
+                        <input type="text" name="name" class="form-control" required autofocus>
+                        <small class="text-muted">
+                            {% if lang == 'sw' %}
+                                Chagua jina linalowakilisha biashara yako.
+                            {% else %}
+                                Choose a name that represents your business.
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-align-left"></i> 
+                            {% if lang == 'sw' %}
+                                Maelezo ya Duka
+                            {% else %}
+                                Shop Description
+                            {% endif %}
+                        </label>
+                        <textarea name="description" rows="3" class="form-control" placeholder="{% if lang == 'sw' %}Andika maelezo ya biashara yako...{% else %}Write about your business...{% endif %}"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> 
+                            {% if lang == 'sw' %}
+                                Eneo (Mji au Mkoa)
+                            {% else %}
+                                Location (City or Region)
+                            {% endif %}
+                        </label>
+                        <input type="text" name="location" class="form-control" placeholder="e.g., Dar es Salaam, Nairobi, Lagos">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-phone"></i> 
+                            {% if lang == 'sw' %}
+                                Namba ya Simu (ya Biashara)
+                            {% else %}
+                                Phone Number (Business)
+                            {% endif %}
+                        </label>
+                        <input type="tel" name="phone" class="form-control" placeholder="+255 XXX XXX XXX">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-image"></i> 
+                            {% if lang == 'sw' %}
+                                URL ya Picha ya Duka
+                            {% else %}
+                                Shop Image URL
+                            {% endif %}
+                        </label>
+                        <input type="url" name="image_url" class="form-control" placeholder="https://example.com/shop-image.jpg">
+                        <small class="text-muted">
+                            {% if lang == 'sw' %}
+                                Weka URL ya picha inayoonyesha duka lako (hiari).
+                            {% else %}
+                                Provide an image URL that represents your shop (optional).
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check-circle"></i> 
+                            {% if lang == 'sw' %}
+                                Unda Duka
+                            {% else %}
+                                Create Shop
+                            {% endif %}
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 
+                            {% if lang == 'sw' %}
+                                Rudi Dashibodi
+                            {% else %}
+                                Back to Dashboard
+                            {% endif %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
