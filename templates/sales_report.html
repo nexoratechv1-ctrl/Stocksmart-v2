@@ -1,1 +1,125 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-chart-line"></i> 
+            {% if lang == 'sw' %}
+                Ripoti ya Mauzo - {{ shop.name }}
+            {% else %}
+                Sales Report - {{ shop.name }}
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('export_sales_pdf', shop_id=shop.id) }}?filter={{ filter_type }}{% if start_date %}&start={{ start_date }}{% endif %}{% if end_date %}&end={{ end_date }}{% endif %}" class="btn btn-danger">
+            <i class="fas fa-file-pdf"></i> 
+            {% if lang == 'sw' %}Pakua PDF{% else %}Export PDF{% endif %}
+        </a>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-filter"></i> 
+                {% if lang == 'sw' %}Chuja Mauzo{% else %}Filter Sales{% endif %}
+            </h5>
+            <div class="btn-group mb-3" role="group">
+                <a href="{{ url_for('sales_report', shop_id=shop.id, filter='today') }}" class="btn btn-outline-primary {% if filter_type == 'today' %}active{% endif %}">
+                    {% if lang == 'sw' %}Leo{% else %}Today{% endif %}
+                </a>
+                <a href="{{ url_for('sales_report', shop_id=shop.id, filter='week') }}" class="btn btn-outline-primary {% if filter_type == 'week' %}active{% endif %}">
+                    {% if lang == 'sw' %}Wiki Hii{% else %}This Week{% endif %}
+                </a>
+                <a href="{{ url_for('sales_report', shop_id=shop.id, filter='month') }}" class="btn btn-outline-primary {% if filter_type == 'month' %}active{% endif %}">
+                    {% if lang == 'sw' %}Mwezi Huu{% else %}This Month{% endif %}
+                </a>
+            </div>
+            <form method="GET" action="{{ url_for('sales_report', shop_id=shop.id) }}" class="row g-2">
+                <input type="hidden" name="filter" value="custom">
+                <div class="col-auto">
+                    <input type="date" name="start" class="form-control" placeholder="Start date" value="{{ start_date if start_date else '' }}">
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="end" class="form-control" placeholder="End date" value="{{ end_date if end_date else '' }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> {% if lang == 'sw' %}Tafuta{% else %}Search{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-simple fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ currency }} {{ total_amount|round(0) }}</h3>
+                    <p>{% if lang == 'sw' %}Jumla ya Mauzo{% else %}Total Sales{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-wallet fa-2x" style="color: var(--neon-cyan);"></i>
+                    <h3>{{ currency }} {{ total_profit|round(0) }}</h3>
+                    <p>{% if lang == 'sw' %}Jumla ya Faida{% else %}Total Profit{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-table"></i> 
+            {% if lang == 'sw' %}Orodha ya Mauzo{% else %}Sales List{% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% if lang == 'sw' %}Tarehe{% else %}Date{% endif %}</th>
+                            <th>{% if lang == 'sw' %}Bidhaa{% else %}Product{% endif %}</th>
+                            <th>{% if lang == 'sw' %}Idadi{% else %}Qty{% endif %}</th>
+                            <th>{% if lang == 'sw' %}Jumla ({{ currency }}){% else %}Total ({{ currency }}){% endif %}</th>
+                            <th>{% if lang == 'sw' %}Faida ({{ currency }}){% else %}Profit ({{ currency }}){% endif %}</th>
+                            <th>{% if lang == 'sw' %}Mteja{% else %}Customer{% endif %}</th>
+                            <th>{% if lang == 'sw' %}Malipo{% else %}Payment{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ sale.product.name if sale.product else 'Deleted' }}</td>
+                            <td>{{ sale.quantity }} {{ sale.product.unit if sale.product else '' }}</td>
+                            <td>{{ currency }} {{ sale.total_amount|round(0) }}</td>
+                            <td>{{ currency }} {{ sale.profit|round(0) }}</td>
+                            <td>{{ sale.customer_name or '-' }}</td>
+                            <td>{{ sale.payment_method or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                {% if lang == 'sw' %}
+                                    Hakuna mauzo yaliyopatikana kwa kipindi hiki.
+                                {% else %}
+                                    No sales found for this period.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
