@@ -1,1 +1,140 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-robot"></i> 
+            {% if lang == 'sw' %}
+                Utabiri wa Mauzo kwa Wiki 7 - {{ shop.name }}
+            {% else %}
+                Sales Forecast (Next 7 Days) - {{ shop.name }}
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('manage_shop', shop_id=shop.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 
+            {% if lang == 'sw' %}Rudi kwa Duka{% else %}Back to Shop{% endif %}
+        </a>
+    </div>
+
+    <!-- Advice Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <i class="fas fa-lightbulb"></i> 
+            {% if lang == 'sw' %}
+                Ushauri wa Kitaalam
+            {% else %}
+                Smart Restocking Advice
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% for advice in advice_list %}
+                <p><i class="fas fa-check-circle"></i> {{ advice }}</p>
+            {% else %}
+                <p>
+                    {% if lang == 'sw' %}
+                        Hakuna data ya kutosha ya mauzo (inahitajika angalau siku 7).
+                    {% else %}
+                        Not enough sales data (at least 7 days required).
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Forecast Chart -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-chart-line"></i> 
+            {% if lang == 'sw' %}
+                Grafu ya Utabiri
+            {% else %}
+                Forecast Chart
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <canvas id="forecastChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Forecast Table -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-table"></i> 
+            {% if lang == 'sw' %}
+                Jedwali la Utabiri (Wiki 7 Zijazo)
+            {% else %}
+                Forecast Table (Next 7 Days)
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% if lang == 'sw' %}Siku{% else %}Day{% endif %}</th>
+                            <th>{% if lang == 'sw' %}Mauzo Yanayotarajiwa ({{ currency }}){% else %}Predicted Sales ({{ currency }}){% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in forecast %}
+                        <tr>
+                            <td>{% if lang == 'sw' %}Siku {{ item.day }}{% else %}Day {{ item.day }}{% endif %}</td>
+                            <td>{{ currency }} {{ item.sales|round(0) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Prepare data from the `forecast` list passed from the backend
+    const forecastData = {{ forecast|tojson }};
+    const labels = forecastData.map(item => '{{ "" if lang == "sw" else "" }}' + (item.day));
+    const salesData = forecastData.map(item => item.sales);
+    
+    // Ensure labels are in the correct language
+    {% if lang == 'sw' %}
+        const dayLabel = 'Siku ';
+    {% else %}
+        const dayLabel = 'Day ';
+    {% endif %}
+    const finalLabels = forecastData.map(item => dayLabel + item.day);
+    
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: finalLabels,
+            datasets: [{
+                label: '{% if lang == "sw" %}Mauzo yanayotarajiwa ({{ currency }}){% else %}Predicted Sales ({{ currency }}){% endif %}',
+                data: salesData,
+                borderColor: '#48A9A6',
+                backgroundColor: 'rgba(72, 169, 166, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#ffd700',
+                pointBorderColor: '#fff',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '{{ currency }} ' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
