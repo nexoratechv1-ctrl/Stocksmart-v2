@@ -248,3 +248,180 @@ def sell(sid):
                 flash(f'Sold {q} {p.u} of {p.n} for {cu()} {tot:,.0f}','success')
         return redirect(url_for('sell',shop_id=s.id))
     return render_template('sell.html',shop=s,products=P.query.filter_by(sid=s.id).filter(P.q>0).all())
+@app.route('/shop/<int:sid>/sales_report')
+@login_required
+def sr(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id and not current_user.a: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    f=request.args.get('filter','today'); td=date.today()
+    if f=='today': st=ed=td
+    elif f=='week': st=td-timedelta(days=td.weekday()); ed=td
+    elif f=='month': st=td.replace(day=1); ed=td
+    else: st=datetime.strptime(request.args.get('start'),'%Y-%m-%d').date() if request.args.get('start') else td; ed=datetime.strptime(request.args.get('end'),'%Y-%m-%d').date() if request.args.get('end') else td
+    sales=Sa.query.filter_by(sid=s.id).filter(db.func.date(Sa.cr)>=st, db.func.date(Sa.cr)<=ed).order_by(Sa.cr.desc()).all()
+    ta=sum(x.tot for x in sales); tp=sum(x.pf for x in sales)
+    return render_template('sales_report.html',shop=s,sales=sales,total_amount=ta,total_profit=tp,filter_type=f,start_date=st,end_date=ed)
+@app.route('/shop/<int:sid>/low_stock')
+@login_required
+def ls(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    return render_template('low_stock.html',shop=s,low_stock_products=P.query.filter_by(sid=s.id).filter(P.q<=P.th).all())
+@app.route('/shop/<int:sid>/tax_reminder')
+@login_required
+def tr(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    c=current_user.co; tr=C[c]['tr']; tn=C[c]['tn']
+    ms=datetime(datetime.today().year,datetime.today().month,1)
+    sales=Sa.query.filter_by(sid=s.id).filter(Sa.cr>=ms).all()
+    ts=sum(x.tot for x in sales); vat=ts*tr
+    td=datetime.today(); dd=datetime(td.year,td.month,20) if td.day<20 else datetime((td.replace(day=1)+timedelta(32)).year,(td.replace(day=1)+timedelta(32)).month,20)
+    dl=(dd-td).days
+    return render_template('tax_reminder.html',shop=s,tax_name=tn,tax_rate=tr,total_sales_this_month=ts,vat_due=vat,due_date=dd,days_left=dl)
+@app.route('/shop/<int:sid>/ai_forecast')
+@login_required
+def af(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    m,ld=fc(s.id)
+    if m is None: flash('Need 7 days of sales data','warning'); return redirect(url_for('ms',shop_id=s.id))
+    last=(ld-datetime.now().date()).days+30
+    preds=m.predict(np.array([[last+i] for i in range(1,8)]))
+    preds=[max(0,round(p)) for p in preds]
+    fc=[{'day':i+1,'sales':p} for i,p in enumerate(preds)]
+    adv=[f"Avg daily: {cu()} {sum(preds)/7:,.0f}"]
+    if preds[-1]>preds[0]*1.2: adv.append("⚠️ Sales increasing – order extra")
+    elif preds[-1]<preds[0]*0.8: adv.append("ℹ️ Sales may decrease – avoid overstock")
+    else: adv.append("✅ Sales stable")
+    return render_template('ai_forecast.html',shop=s,forecast=fc,advice_list=adv)
+@app.route('/shop/<int:sid>/anomaly_history')
+@login_required
+def ah(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    return render_template('anomaly_history.html',shop=s,anomalies=A.query.filter_by(sid=s.id).order_by(A.dt.desc()).all())
+@app.route('/marketplace')
+def mp():
+    return render_template('marketplace.html',shops=S.query.filter_by(a=True).all())
+@app.route('/search')
+def se():
+    q=request.args.get('q','').strip()
+    if not q: return redirect(url_for('mp'))
+    prods=P.query.join(S).filter((P.n.ilike(f'%{q}%'))|(P.d.ilike(f'%{q}%')),S.a==True).limit(50).all()
+    return render_template('search_results.html',products=prods,query=q,currency=cu())
+@app.route('/shop/view/<int:sid>')
+def vs(sid):
+    s=S.query.get_or_404(sid)
+    return render_template('view_shop.html',shop=s,products=P.query.filter_by(sid=s.id).all(),currency=cu())
+@app.route('/helpdesk',methods=['GET','POST'])
+@login_required
+def hd():
+    if request.method=='POST':
+        db.session.add(Hm(uid=current_user.id,sub=request.form['sub'],msg=request.form['msg']))
+        db.session.commit(); flash('Message sent to admin','success'); return redirect(url_for('hd'))
+    return render_template('helpdesk.html',messages=Hm.query.filter_by(uid=current_user.id).order_by(Hm.cr.desc()).all())
+@app.route('/admin/help')
+@login_required
+@ad
+def ahp():
+    return render_template('admin_help.html',messages=Hm.query.order_by(Hm.cr.desc()).all())
+@app.route('/admin/reply_message/<int:mid>',methods=['POST'])
+@login_required
+@ad
+def arm(mid):
+    h=Hm.query.get_or_404(mid)
+    h.rep=request.form['rep']; h.st=request.form['st']
+    db.session.commit(); flash('Reply sent','success'); return redirect(url_for('ahp'))
+@app.route('/admin/delete_message/<int:mid>')
+@login_required
+@ad
+def adm(mid):
+    db.session.delete(Hm.query.get_or_404(mid)); db.session.commit(); flash('Deleted','success')
+    return redirect(url_for('ahp'))
+@app.route('/snake')
+def sg(): return render_template('snake.html')
+@app.route('/shop/<int:sid>/export_sales_pdf')
+@login_required
+def esp(sid):
+    s=S.query.get_or_404(sid)
+    if s.oid!=current_user.id and not current_user.a: flash('Access denied','danger'); return redirect(url_for('dashboard'))
+    f=request.args.get('filter','today'); td=date.today()
+    if f=='today': st=ed=td
+    elif f=='week': st=td-timedelta(days=td.weekday()); ed=td
+    elif f=='month': st=td.replace(day=1); ed=td
+    else: st=datetime.strptime(request.args.get('start'),'%Y-%m-%d').date() if request.args.get('start') else td; ed=datetime.strptime(request.args.get('end'),'%Y-%m-%d').date() if request.args.get('end') else td
+    sales=Sa.query.filter_by(sid=s.id).filter(db.func.date(Sa.cr)>=st, db.func.date(Sa.cr)<=ed).order_by(Sa.cr).all()
+    ta=sum(x.tot for x in sales); tp=sum(x.pf for x in sales)
+    html=render_template('sales_pdf.html',shop=s,sales=sales,total_amount=ta,total_profit=tp,start_date=st.strftime('%d/%m/%Y'),end_date=ed.strftime('%d/%m/%Y'),generation_date=datetime.now().strftime('%d/%m/%Y %H:%M'),currency=cu(),lang=lg())
+    pdf=HTML(string=html).write_pdf()
+    resp=app.make_response(pdf)
+    resp.headers['Content-Type']='application/pdf'
+    resp.headers['Content-Disposition']=f'attachment; filename=sales_report_{s.n}_{st}_{ed}.pdf'
+    return resp
+@app.route('/admin')
+@login_required
+@ad
+def admd():
+    return render_template('admin_dashboard.html',total_users=U.query.count(),total_shops=S.query.count(),total_sales_all=Sa.query.count(),total_revenue_all=db.session.query(db.func.sum(Sa.tot)).scalar() or 0,users=U.query.order_by(U.cr.desc()).all(),shops=S.query.order_by(S.cr.desc()).all(),help_messages=Hm.query.order_by(Hm.cr.desc()).limit(10).all())
+@app.route('/admin/promote/<int:uid>')
+@login_required
+@ad
+def apu(uid):
+    u=U.query.get_or_404(uid)
+    if u.id!=current_user.id: u.a=True; db.session.commit(); flash(f'{u.u} is now admin','success')
+    else: flash('Cannot promote yourself','danger')
+    return redirect(url_for('admd'))
+@app.route('/admin/delete_user/<int:uid>')
+@login_required
+@ad
+def adu(uid):
+    u=U.query.get_or_404(uid)
+    if u.id!=current_user.id: db.session.delete(u); db.session.commit(); flash('User deleted','success')
+    else: flash('Cannot delete yourself','danger')
+    return redirect(url_for('admd'))
+@app.route('/admin/toggle_shop/<int:sid>')
+@login_required
+@ad
+def ats(sid):
+    s=S.query.get_or_404(sid)
+    s.a=not s.a; db.session.commit()
+    flash(f'Shop {s.n} {"activated" if s.a else "deactivated"}','success')
+    return redirect(url_for('admd'))
+@app.route('/admin/delete_shop/<int:sid>')
+@login_required
+@ad
+def ads(sid):
+    db.session.delete(S.query.get_or_404(sid)); db.session.commit(); flash('Shop deleted','success')
+    return redirect(url_for('admd'))
+@app.route('/profile',methods=['GET','POST'])
+@login_required
+def pr():
+    if request.method=='POST':
+        current_user.u=request.form['u']; current_user.e=request.form['e']; current_user.p=request.form['ph']; current_user.co=request.form['co']
+        db.session.commit(); flash('Profile updated','success'); return redirect(url_for('pr'))
+    return render_template('profile.html',user=current_user,countries=C.keys())
+@app.route('/feedback',methods=['GET','POST'])
+def fb():
+    if request.method=='POST':
+        if not current_user.is_authenticated: flash('Please login','warning'); return redirect(url_for('l'))
+        r=int(request.form.get('rating',0)); c=request.form.get('comment','').strip()
+        if r<1 or r>5 or not c: flash('Valid rating and comment required','danger')
+        else: db.session.add(Cm(uid=current_user.id,r=r,c=c)); db.session.commit(); flash('Thank you!','success')
+        return redirect(url_for('fb'))
+    return render_template('feedback.html',comments=Cm.query.filter_by(ap=True).order_by(Cm.cr.desc()).all())
+@app.route('/manifest.json')
+def mf(): return app.send_static_file('manifest.json')
+@app.route('/service-worker.js')
+def sw(): return app.send_static_file('service-worker.js', mimetype='application/javascript')
+def init():
+    db.create_all()
+    if not U.query.filter_by(u='admin').first():
+        a=U(u='admin',e='admin@x.com',p='+255712345678',co='Tanzania',a=True)
+        a.set('admin123')
+        db.session.add(a); db.session.commit()
+    if not S.query.first():
+        db.session.add(S(oid=1,n='Demo Shop',d='Welcome to MultiStore',a=True))
+        db.session.commit()
+with app.app_context(): init()
+if __name__=='__main__': app.run(host='0.0.0.0',port=5000,debug=True)
