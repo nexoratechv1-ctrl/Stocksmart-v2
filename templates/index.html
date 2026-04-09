@@ -1,1 +1,148 @@
+{% extends "base.html" %}
 
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">
+            {% if lang == 'sw' %}
+                Karibu MultiStore
+            {% else %}
+                Welcome to MultiStore
+            {% endif %}
+        </h1>
+        <p class="lead mt-3">
+            {% if lang == 'sw' %}
+                Soko la kimataifa linalowaunganisha wauzaji na wanunuzi kote Afrika.
+            {% else %}
+                The international marketplace connecting sellers and buyers across Africa.
+            {% endif %}
+        </p>
+        <div class="mt-4">
+            <a href="{{ url_for('marketplace') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-store"></i> 
+                {% if lang == 'sw' %}Vinjari Masoko{% else %}Browse Marketplaces{% endif %}
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-user-plus"></i> 
+                {% if lang == 'sw' %}Anza Biashara Yako{% else %}Start Your Business{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container my-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-globe fa-3x mb-3" style="color: var(--neon-cyan);"></i>
+                    <h5 class="card-title">
+                        {% if lang == 'sw' %}Nchi 7 za Afrika{% else %}7 African Countries{% endif %}
+                    </h5>
+                    <p class="card-text">
+                        {% if lang == 'sw' %}Tanzania, Kenya, Nigeria, Rwanda, Uganda, Afrika Kusini.{% else %}Tanzania, Kenya, Nigeria, Rwanda, Uganda, South Africa.{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-language fa-3x mb-3" style="color: var(--neon-cyan);"></i>
+                    <h5 class="card-title">
+                        {% if lang == 'sw' %}Lugha Yako{% else %}Your Language{% endif %}
+                    </h5>
+                    <p class="card-text">
+                        {% if lang == 'sw' %}Kiswahili kwa Tanzania, Kiingereza kwa nchi nyingine.{% else %}Kiswahili for Tanzania, English for others.{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-3x mb-3" style="color: var(--neon-cyan);"></i>
+                    <h5 class="card-title">
+                        {% if lang == 'sw' %}Ripoti na Uchambuzi{% else %}Reports & Analytics{% endif %}
+                    </h5>
+                    <p class="card-text">
+                        {% if lang == 'sw' %}Tazama mauzo, faida, na utabiri wa AI.{% else %}View sales, profits, and AI forecasts.{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action (For Shop Owners) -->
+<div class="cta-section py-5 my-4" style="background: linear-gradient(135deg, #0a1a2f, #1E3A5F); border-radius: 30px;">
+    <div class="container text-center">
+        <h2>
+            {% if lang == 'sw' %}
+                Wewe ni mfanyabiashara?
+            {% else %}
+                Are you a business owner?
+            {% endif %}
+        </h2>
+        <p class="lead">
+            {% if lang == 'sw' %}
+                Tengeneza duka lako mtandaoni bure, pata wateja wapya, na kudhibiti mauzo yako.
+            {% else %}
+                Create your online shop for free, reach new customers, and manage your sales.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('register') }}" class="btn btn-success btn-lg mt-2">
+            <i class="fas fa-rocket"></i> 
+            {% if lang == 'sw' %}Anza Sasa{% else %}Start Now{% endif %}
+        </a>
+    </div>
+</div>
+
+<!-- Featured Shops (Dynamic – will be populated from backend) -->
+<div class="container my-5">
+    <h2 class="text-center mb-4">
+        {% if lang == 'sw' %}Maduka Yanayojulikana{% else %}Featured Shops{% endif %}
+    </h2>
+    <div class="row" id="featured-shops">
+        <!-- Example static cards; replace with loop from backend -->
+        <div class="col-md-4 mb-4">
+            <div class="card shop-card">
+                <img src="https://via.placeholder.com/300x200?text=Shop+Image" class="card-img-top" alt="Shop">
+                <div class="card-body">
+                    <h5 class="card-title">Tech Zone Dar</h5>
+                    <p class="card-text">Electronics & Gadgets</p>
+                    <a href="#" class="btn btn-sm btn-primary">Visit Shop</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shop-card">
+                <img src="https://via.placeholder.com/300x200?text=Shop+Image" class="card-img-top" alt="Shop">
+                <div class="card-body">
+                    <h5 class="card-title">Fashion Hub Nairobi</h5>
+                    <p class="card-text">Clothing & Accessories</p>
+                    <a href="#" class="btn btn-sm btn-primary">Visit Shop</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shop-card">
+                <img src="https://via.placeholder.com/300x200?text=Shop+Image" class="card-img-top" alt="Shop">
+                <div class="card-body">
+                    <h5 class="card-title">Fresh Groceries Lagos</h5>
+                    <p class="card-text">Farm fresh products</p>
+                    <a href="#" class="btn btn-sm btn-primary">Visit Shop</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-3">
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-primary">
+            {% if lang == 'sw' %}Tazama Maduka Yote{% else %}View All Shops{% endif %}
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}
