@@ -1,1 +1,104 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-exclamation-triangle"></i> 
+            {% if lang == 'sw' %}
+                Bidhaa Zinazoisha - {{ shop.name }}
+            {% else %}
+                Low Stock Products - {{ shop.name }}
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('manage_shop', shop_id=shop.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 
+            {% if lang == 'sw' %}Rudi kwa Duka{% else %}Back to Shop{% endif %}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <i class="fas fa-list"></i> 
+            {% if lang == 'sw' %}
+                Orodha ya Bidhaa zilizo Chini ya Kiwango cha Tahadhari
+            {% else %}
+                Products Below Reorder Point
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if low_stock_products %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% if lang == 'sw' %}Jina la Bidhaa{% else %}Product Name{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Idadi Iliyopo{% else %}Current Stock{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Kiwango cha Tahadhari{% else %}Threshold{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Kitengo{% else %}Unit{% endif %}</th>
+                                <th>{% if lang == 'sw' %}Kitendo{% else %}Action{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.quantity }} {{ product.unit }}</td>
+                                <td>{{ product.low_stock_threshold }} {{ product.unit }}</td>
+                                <td>{{ product.unit }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#adjustStockModal{{ product.id }}">
+                                        <i class="fas fa-adjust"></i> 
+                                        {% if lang == 'sw' %}Rekebisha Stock{% else %}Adjust Stock{% endif %}
+                                    </button>
+                                    <a href="{{ url_for('edit_product', shop_id=shop.id, product_id=product.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-edit"></i> 
+                                        {% if lang == 'sw' %}Hariri{% else %}Edit{% endif %}
+                                    </a>
+                                </td>
+                             </tr>
+                             
+                             <!-- Adjust Stock Modal for this product -->
+                             <div class="modal fade" id="adjustStockModal{{ product.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">{{ product.name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('adjust_stock', shop_id=shop.id, product_id=product.id) }}">
+                                            <div class="modal-body">
+                                                <label>{% if lang == 'sw' %}Ongeza au Punguza Idadi{% else %}Add or Remove Quantity{% endif %}</label>
+                                                <input type="number" step="0.01" name="quantity" class="form-control" required>
+                                                <textarea name="note" class="form-control mt-2" placeholder="{% if lang == 'sw' %}Sababu (hiari){% else %}Reason (optional){% endif %}"></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary">
+                                                    {% if lang == 'sw' %}Weka{% else %}Apply{% endif %}
+                                                </button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    {% if lang == 'sw' %}Ghairi{% else %}Cancel{% endif %}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success text-center">
+                    <i class="fas fa-check-circle"></i> 
+                    {% if lang == 'sw' %}
+                        Hakuna bidhaa zilizo chini ya kiwango cha tahadhari. Vizuri!
+                    {% else %}
+                        No products are below the low stock threshold. Great!
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
