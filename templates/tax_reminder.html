@@ -1,1 +1,119 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-file-invoice-dollar"></i> 
+            {% if lang == 'sw' %}
+                Kumbusho la Kodi - {{ shop.name }}
+            {% else %}
+                Tax Reminder - {{ shop.name }}
+            {% endif %}
+        </h2>
+        <a href="{{ url_for('manage_shop', shop_id=shop.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 
+            {% if lang == 'sw' %}Rudi kwa Duka{% else %}Back to Shop{% endif %}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-info-circle"></i> 
+            {% if lang == 'sw' %}
+                Taarifa za Kodi kulingana na Nchi Yako
+            {% else %}
+                Tax Information Based on Your Country
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>
+                        <i class="fas fa-building"></i> 
+                        {% if lang == 'sw' %}Mamlaka ya Kodi{% else %}Tax Authority{% endif %}
+                    </h5>
+                    <p class="lead">{{ tax_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>
+                        <i class="fas fa-percent"></i> 
+                        {% if lang == 'sw' %}Kiwango cha VAT{% else %}VAT Rate{% endif %}
+                    </h5>
+                    <p class="lead">{{ (tax_rate * 100)|int }}%</p>
+                </div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>
+                        <i class="fas fa-chart-line"></i> 
+                        {% if lang == 'sw' %}Mauzo ya Mwezi Huu{% else %}This Month's Sales{% endif %}
+                    </h5>
+                    <p class="lead">{{ currency }} {{ total_sales_this_month|round(0) }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>
+                        <i class="fas fa-money-bill-wave"></i> 
+                        {% if lang == 'sw' %}VAT Inayokadiriwa{% else %}Estimated VAT Due{% endif %}
+                    </h5>
+                    <p class="lead text-warning">{{ currency }} {{ vat_due|round(0) }}</p>
+                </div>
+            </div>
+            <hr>
+
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-calendar-alt"></i> 
+                {% if lang == 'sw' %}
+                    Tarehe ya mwisho ya kulipa VAT ni tarehe {{ due_date.strftime('%d %b %Y') }}.
+                    Imesalia siku {{ days_left }}.
+                {% else %}
+                    VAT payment deadline is {{ due_date.strftime('%d %b %Y') }}.
+                    {{ days_left }} days remaining.
+                {% endif %}
+            </div>
+
+            {% if days_left <= 7 and days_left >= 0 %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> 
+                {% if lang == 'sw' %}
+                    Kumbuka: Umebakiwa siku chache kulipa kodi. Hakikisha unalipa kabla ya tarehe ya mwisho ili kuepuka faini.
+                {% else %}
+                    Reminder: Only a few days left to pay your tax. Pay before the deadline to avoid penalties.
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <h5>
+                    <i class="fas fa-question-circle"></i> 
+                    {% if lang == 'sw' %}Ninawezaje kulipa?{% else %}How to pay?{% endif %}
+                </h5>
+                <p>
+                    {% if lang == 'sw' %}
+                        Unaweza kulipa kodi yako kwa njia zifuatazo:
+                    {% else %}
+                        You can pay your tax through:
+                    {% endif %}
+                </p>
+                <ul>
+                    <li>
+                        {% if lang == 'sw' %}Kupitia tovuti ya {{ tax_name }} (Online){% else %}Through the {{ tax_name }} website (Online){% endif %}
+                    </li>
+                    <li>
+                        {% if lang == 'sw' %}Kwa kwenda ofisi ya {{ tax_name }} karibu nawe{% else %}By visiting your local {{ tax_name }} office{% endif %}
+                    </li>
+                    <li>
+                        {% if lang == 'sw' %}Kwa kutumia benki au mifumo ya malipo ya simu (kama M-Pesa, Tigo Pesa) – angalia tovuti ya {{ tax_name }}{% else %}Using banks or mobile money systems (e.g., M-Pesa) – check {{ tax_name }} website{% endif %}
+                    </li>
+                </ul>
+                <a href="https://www.tra.go.tz" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-external-link-alt"></i> 
+                    {% if lang == 'sw' %}Tembelea Tovuti ya {{ tax_name }}{% else %}Visit {{ tax_name }} Website{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
