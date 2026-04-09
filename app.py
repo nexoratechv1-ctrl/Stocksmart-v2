@@ -430,3 +430,104 @@ def sell(shop_id):
         return redirect(url_for('sell', shop_id=shop.id))
     products = Product.query.filter_by(shop_id=shop.id).filter(Product.quantity > 0).all()
     return render_template('sell.html', shop=shop, products=products, currency=get_currency(current_user.country))
+# ==================== REPORTS & ANALYTICS ====================
+@app.route('/shop/<int:shop_id>/sales_report')
+@login_required
+def sales_report(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id and not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    filter_type = request.args.get('filter', 'today')
+    today_date = date.today()
+    if filter_type == 'today':
+        start = end = today_date
+    elif filter_type == 'week':
+        start = today_date - timedelta(days=today_date.weekday())
+        end = today_date
+    elif filter_type == 'month':
+        start = today_date.replace(day=1)
+        end = today_date
+    elif filter_type == 'custom':
+        start = datetime.strptime(request.args.get('start'), '%Y-%m-%d').date() if request.args.get('start') else today_date
+        end = datetime.strptime(request.args.get('end'), '%Y-%m-%d').date() if request.args.get('end') else today_date
+    else:
+        start = end = today_date
+    sales = Sale.query.filter_by(shop_id=shop.id).filter(
+        db.func.date(Sale.created_at) >= start,
+        db.func.date(Sale.created_at) <= end
+    ).order_by(Sale.created_at.desc()).all()
+    total_amount = sum(s.total_amount for s in sales)
+    total_profit = sum(s.profit for s in sales)
+    return render_template('sales_report.html', shop=shop, sales=sales, total_amount=total_amount,
+                           total_profit=total_profit, filter_type=filter_type, start_date=start, end_date=end)
+
+@app.route('/shop/<int:shop_id>/low_stock')
+@login_required
+def low_stock(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    low_stock_products = Product.query.filter_by(shop_id=shop.id).filter(Product.quantity <= Product.low_stock_threshold).all()
+    return render_template('low_stock.html', shop=shop, low_stock_products=low_stock_products)
+
+@app.route('/shop/<int:shop_id>/tax_reminder')
+@login_required
+def tax_reminder(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    tax_rate = get_tax_rate(current_user.country)
+    tax_name = COUNTRIES.get(current_user.country, {}).get('tax_name', 'TRA')
+    month_start = datetime(datetime.today().year, datetime.today().month, 1)
+    sales_this_month = Sale.query.filter_by(shop_id=shop.id).filter(Sale.created_at >= month_start).all()
+    total_sales = sum(s.total_amount for s in sales_this_month)
+    vat_due = total_sales * tax_rate
+    td = datetime.today()
+    if td.day < 20:
+        due_date = datetime(td.year, td.month, 20)
+    else:
+        next_month = td.replace(day=1) + timedelta(days=32)
+        due_date = datetime(next_month.year, next_month.month, 20)
+    days_left = (due_date - td).days
+    return render_template('tax_reminder.html', shop=shop, tax_name=tax_name, tax_rate=tax_rate,
+                           total_sales_this_month=total_sales, vat_due=vat_due, due_date=due_date, days_left=days_left)
+
+@app.route('/shop/<int:shop_id>/ai_forecast')
+@login_required
+def ai_forecast(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    model, last_date = train_sales_model(shop.id)
+    if model is None:
+        flash('Not enough sales data (need at least 7 days).', 'warning')
+        return redirect(url_for('manage_shop', shop_id=shop.id))
+    last_day_num = (last_date - datetime.now().date()).days + 30
+    future_days = np.array([[last_day_num + i] for i in range(1, 8)])
+    predictions = model.predict(future_days)
+    predictions = [max(0, round(p)) for p in predictions]
+    forecast = [{'day': i+1, 'sales': p} for i, p in enumerate(predictions)]
+    advice_list = []
+    avg_pred = sum(predictions) / len(predictions)
+    advice_list.append(f"Predicted average daily sales next week: {get_currency(current_user.country)} {avg_pred:,.0f}")
+    if predictions[-1] > predictions[0] * 1.2:
+        advice_list.append("⚠️ Sales are increasing! Order extra stock for next week.")
+    elif predictions[-1] < predictions[0] * 0.8:
+        advice_list.append("ℹ️ Sales may decrease. Avoid overstocking.")
+    else:
+        advice_list.append("✅ Sales are stable. Maintain current stock levels.")
+    return render_template('ai_forecast.html', shop=shop, forecast=forecast, advice_list=advice_list)
+
+@app.route('/shop/<int:shop_id>/anomaly_history')
+@login_required
+def anomaly_history(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    anomalies = AnomalyLog.query.filter_by(shop_id=shop.id).order_by(AnomalyLog.date.desc()).all()
+    return render_template('anomaly_history.html', shop=shop, anomalies=anomalies)
