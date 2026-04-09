@@ -1,1 +1,127 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-user-plus"></i> 
+                    {% if lang == 'sw' %}
+                        Jisajili
+                    {% else %}
+                        Register
+                    {% endif %}
+                </h2>
+                
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> 
+                            {% if lang == 'sw' %}
+                                Jina la Mtumiaji
+                            {% else %}
+                                Username
+                            {% endif %}
+                        </label>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-envelope"></i> 
+                            {% if lang == 'sw' %}
+                                Barua Pepe
+                            {% else %}
+                                Email
+                            {% endif %}
+                        </label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-phone"></i> 
+                            {% if lang == 'sw' %}
+                                Namba ya Simu
+                            {% else %}
+                                Phone Number
+                            {% endif %}
+                        </label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-globe"></i> 
+                            {% if lang == 'sw' %}
+                                Nchi
+                            {% else %}
+                                Country
+                            {% endif %}
+                        </label>
+                        <select name="country" class="form-select" required>
+                            <option value="Tanzania">Tanzania</option>
+                            <option value="Kenya">Kenya</option>
+                            <option value="Nigeria">Nigeria</option>
+                            <option value="Rwanda">Rwanda</option>
+                            <option value="Uganda">Uganda</option>
+                            <option value="South Africa">South Africa</option>
+                        </select>
+                        <small class="text-muted">
+                            {% if lang == 'sw' %}
+                                Lugha ya tovuti itabadilika kulingana na nchi yako.
+                            {% else %}
+                                Website language will change based on your country.
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i> 
+                            {% if lang == 'sw' %}
+                                Nenosiri
+                            {% else %}
+                                Password
+                            {% endif %}
+                        </label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i> 
+                            {% if lang == 'sw' %}
+                                Thibitisha Nenosiri
+                            {% else %}
+                                Confirm Password
+                            {% endif %}
+                        </label>
+                        <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-user-check"></i> 
+                        {% if lang == 'sw' %}
+                            Jisajili
+                        {% else %}
+                            Register
+                        {% endif %}
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <p class="text-center mb-0">
+                    {% if lang == 'sw' %}
+                        Tayari una akaunti? <a href="{{ url_for('login') }}" class="text-decoration-none">Ingia hapa</a>
+                    {% else %}
+                        Already have an account? <a href="{{ url_for('login') }}" class="text-decoration-none">Login here</a>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
