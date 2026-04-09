@@ -281,3 +281,152 @@ def dashboard():
         total_products += Product.query.filter_by(shop_id=shop.id).count()
         total_sales += db.session.query(db.func.sum(Sale.total_amount)).filter(Sale.shop_id==shop.id).scalar() or 0
     return render_template('dashboard.html', shops=shops, total_products=total_products, total_sales=total_sales)
+# ==================== SHOP MANAGEMENT ====================
+@app.route('/shop/create', methods=['GET', 'POST'])
+@login_required
+def create_shop():
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form.get('description', '')
+        location = request.form.get('location', '')
+        phone = request.form.get('phone', '')
+        image_url = request.form.get('image_url', '')
+        shop = Shop(owner_id=current_user.id, name=name, description=description,
+                   location=location, phone=phone, image_url=image_url)
+        db.session.add(shop)
+        db.session.commit()
+        flash('Shop created successfully!', 'success')
+        return redirect(url_for('manage_shop', shop_id=shop.id))
+    return render_template('create_shop.html')
+
+@app.route('/shop/<int:shop_id>')
+@login_required
+def manage_shop(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id and not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    products = Product.query.filter_by(shop_id=shop.id).all()
+    recent_sales = Sale.query.filter_by(shop_id=shop.id).order_by(Sale.created_at.desc()).limit(20).all()
+    low_stock_products = [p for p in products if p.quantity <= p.low_stock_threshold]
+    total_sales = db.session.query(db.func.sum(Sale.total_amount)).filter(Sale.shop_id==shop.id).scalar() or 0
+    total_profit = db.session.query(db.func.sum(Sale.profit)).filter(Sale.shop_id==shop.id).scalar() or 0
+    return render_template('shop_dashboard.html', shop=shop, products=products, recent_sales=recent_sales,
+                           low_stock_products=low_stock_products, total_sales=total_sales, total_profit=total_profit)
+
+@app.route('/shop/<int:shop_id>/product/add', methods=['GET', 'POST'])
+@login_required
+def add_product(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        product = Product(
+            shop_id=shop.id,
+            name=request.form['name'],
+            description=request.form.get('description', ''),
+            price=float(request.form['price']),
+            cost_price=float(request.form['cost_price']),
+            quantity=float(request.form['quantity']),
+            low_stock_threshold=float(request.form.get('low_stock_threshold', 5)),
+            unit=request.form.get('unit', 'piece'),
+            category=request.form.get('category', ''),
+            image_url=request.form.get('image_url', '')
+        )
+        db.session.add(product)
+        db.session.commit()
+        flash('Product added', 'success')
+        return redirect(url_for('manage_shop', shop_id=shop.id))
+    return render_template('add_product.html', shop=shop)
+
+@app.route('/shop/<int:shop_id>/product/edit/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def edit_product(shop_id, product_id):
+    shop = Shop.query.get_or_404(shop_id)
+    product = Product.query.get_or_404(product_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        product.name = request.form['name']
+        product.description = request.form.get('description', '')
+        product.price = float(request.form['price'])
+        product.cost_price = float(request.form['cost_price'])
+        product.quantity = float(request.form['quantity'])
+        product.low_stock_threshold = float(request.form.get('low_stock_threshold', 5))
+        product.unit = request.form.get('unit', 'piece')
+        product.category = request.form.get('category', '')
+        product.image_url = request.form.get('image_url', '')
+        db.session.commit()
+        flash('Product updated', 'success')
+        return redirect(url_for('manage_shop', shop_id=shop.id))
+    return render_template('edit_product.html', shop=shop, product=product)
+
+@app.route('/shop/<int:shop_id>/product/delete/<int:product_id>')
+@login_required
+def delete_product(shop_id, product_id):
+    shop = Shop.query.get_or_404(shop_id)
+    product = Product.query.get_or_404(product_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    if Sale.query.filter_by(product_id=product.id).first():
+        flash('Cannot delete product with sales history', 'danger')
+    else:
+        db.session.delete(product)
+        db.session.commit()
+        flash('Product deleted', 'success')
+    return redirect(url_for('manage_shop', shop_id=shop.id))
+
+@app.route('/shop/<int:shop_id>/adjust_stock/<int:product_id>', methods=['POST'])
+@login_required
+def adjust_stock(shop_id, product_id):
+    shop = Shop.query.get_or_404(shop_id)
+    product = Product.query.get_or_404(product_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    qty = float(request.form['quantity'])
+    note = request.form.get('note', '')
+    product.quantity += qty
+    hist = StockHistory(shop_id=shop.id, product_id=product.id,
+                       change_type='add' if qty > 0 else 'remove',
+                       quantity=abs(qty), note=note)
+    db.session.add(hist)
+    db.session.commit()
+    flash(f'Stock adjusted by {qty}', 'success')
+    return redirect(url_for('manage_shop', shop_id=shop.id))
+
+@app.route('/shop/<int:shop_id>/sell', methods=['GET', 'POST'])
+@login_required
+def sell(shop_id):
+    shop = Shop.query.get_or_404(shop_id)
+    if shop.owner_id != current_user.id:
+        flash('Access denied', 'danger')
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        product_id = request.form.get('product_id')
+        quantity = float(request.form['quantity'])
+        product = Product.query.get_or_404(product_id)
+        if product.shop_id != shop.id:
+            flash('Invalid product', 'danger')
+            return redirect(url_for('sell', shop_id=shop.id))
+        if product.quantity < quantity:
+            flash(f'Not enough stock. Only {product.quantity} {product.unit} available', 'danger')
+            return redirect(url_for('sell', shop_id=shop.id))
+        total = product.price * quantity
+        profit = (product.price - product.cost_price) * quantity
+        sale = Sale(shop_id=shop.id, product_id=product.id, quantity=quantity,
+                    selling_price=product.price, cost_price=product.cost_price,
+                    total_amount=total, profit=profit,
+                    customer_name=request.form.get('customer_name', ''),
+                    payment_method=request.form.get('payment_method', 'Cash'))
+        product.quantity -= quantity
+        db.session.add(sale)
+        db.session.commit()
+        detect_anomalies(shop.id)
+        flash(f'Sold {quantity} {product.unit} of {product.name} for {get_currency(current_user.country)} {total:,.0f}', 'success')
+        return redirect(url_for('sell', shop_id=shop.id))
+    products = Product.query.filter_by(shop_id=shop.id).filter(Product.quantity > 0).all()
+    return render_template('sell.html', shop=shop, products=products, currency=get_currency(current_user.country))
