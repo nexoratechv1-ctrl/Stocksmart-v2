@@ -715,3 +715,67 @@ def admin_delete_shop(shop_id):
     db.session.commit()
     flash('Shop deleted.', 'success')
     return redirect(url_for('admin_dashboard'))
+# ==================== PROFILE & FEEDBACK ====================
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        current_user.username = request.form['username']
+        current_user.email = request.form['email']
+        current_user.phone = request.form['phone']
+        current_user.country = request.form['country']
+        db.session.commit()
+        flash('Profile updated.', 'success')
+        return redirect(url_for('profile'))
+    return render_template('profile.html', user=current_user, countries=COUNTRIES.keys())
+
+@app.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash('Please login to leave feedback.', 'warning')
+            return redirect(url_for('login'))
+        rating = int(request.form.get('rating', 0))
+        comment = request.form.get('comment', '').strip()
+        if rating < 1 or rating > 5 or not comment:
+            flash('Please provide a valid rating (1-5) and comment.', 'danger')
+            return redirect(url_for('feedback'))
+        new_comment = Comment(user_id=current_user.id, rating=rating, comment=comment)
+        db.session.add(new_comment)
+        db.session.commit()
+        flash('Thank you for your feedback!', 'success')
+        return redirect(url_for('feedback'))
+    comments = Comment.query.filter_by(is_approved=True).order_by(Comment.created_at.desc()).all()
+    return render_template('feedback.html', comments=comments)
+
+# ==================== PWA ====================
+@app.route('/manifest.json')
+def manifest():
+    return app.send_static_file('manifest.json')
+
+@app.route('/service-worker.js')
+def sw():
+    return app.send_static_file('service-worker.js', mimetype='application/javascript')
+
+# ==================== INIT DATABASE ====================
+def init_db():
+    db.create_all()
+    if not User.query.filter_by(username='admin').first():
+        admin = User(username='admin', email='admin@multistore.com', phone='+255712345678',
+                     country='Tanzania', is_admin=True)
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin user created: username 'admin', password 'admin123'")
+    # Create a default shop for admin if none exists
+    if not Shop.query.first():
+        demo_shop = Shop(owner_id=1, name='Demo Shop', description='Welcome to MultiStore', is_active=True)
+        db.session.add(demo_shop)
+        db.session.commit()
+        print("Demo shop created.")
+
+with app.app_context():
+    init_db()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
