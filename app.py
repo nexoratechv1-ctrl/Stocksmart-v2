@@ -83,8 +83,7 @@ class Sale(db.Model):
     quantity = db.Column(db.Float, nullable=False)
     selling_price = db.Column(db.Float, nullable=False)
     cost_price = db.Column(db.Float, nullable=False)
-    total_amount = db.Column(db.Float, nullable=False)
-    profit = db.Column(db.Float, nullable=False)
+    
     customer_name = db.Column(db.String(100))
     payment_method = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
