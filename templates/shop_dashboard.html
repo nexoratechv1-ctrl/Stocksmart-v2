@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <!-- Stats Cards (using total_amount and profit from route) -->
+    <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
             <div class="card dashboard-card text-center">
@@ -38,7 +38,7 @@
             <div class="card dashboard-card text-center">
                 <div class="card-body">
                     <i class="fas fa-chart-line fa-2x"></i>
-                    <h3>{{ currency }} {{ (total_amount|default(0))|round(0) }}</h3>
+                    <h3>{{ currency }} {{ (total_sales|default(0))|round(0) }}</h3>
                     <p>Total Sales</p>
                 </div>
             </div>
@@ -56,7 +56,7 @@
             <div class="card dashboard-card text-center">
                 <div class="card-body">
                     <i class="fas fa-money-bill-wave fa-2x"></i>
-                    <h3>{{ currency }} {{ (profit|default(0))|round(0) }}</h3>
+                    <h3>{{ currency }} {{ (total_profit|default(0))|round(0) }}</h3>
                     <p>Profit</p>
                 </div>
             </div>
