@@ -83,7 +83,8 @@ class Sale(db.Model):
     quantity = db.Column(db.Float, nullable=False)
     selling_price = db.Column(db.Float, nullable=False)
     cost_price = db.Column(db.Float, nullable=False)
-    
+    total_amount = db.session.query(db.func.sum(Sale.total_amount)).filter(Sale.shop_id==shop.id).scalar() or 0
+    profit = db.session.query(db.func.sum(Sale.profit)).filter(Sale.shop_id==shop.id).scalar() or 0
     customer_name = db.Column(db.String(100))
     payment_method = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
