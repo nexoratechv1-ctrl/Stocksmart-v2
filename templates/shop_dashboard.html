@@ -1,1 +1,220 @@
+{% extends "base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+    <!-- Shop Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-store"></i> {{ shop.name }}</h2>
+            <p><i class="fas fa-map-marker-alt"></i> {{ shop.location or 'No location' }} &nbsp;|&nbsp;
+               <i class="fas fa-phone"></i> {{ shop.phone or 'No phone' }}</p>
+            <p>{{ shop.description or '' }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('add_product', shop_id=shop.id) }}" class="btn btn-success">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a href="{{ url_for('sell', shop_id=shop.id) }}" class="btn btn-primary">
+                <i class="fas fa-cash-register"></i> Sell
+            </a>
+            <button onclick="copyShopLink()" class="btn btn-outline-secondary">
+                <i class="fas fa-link"></i> Copy Link
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards (using default(0) to avoid None rounding error) -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-boxes fa-2x"></i>
+                    <h3>{{ products|length }}</h3>
+                    <p>Products</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                    <h3>{{ currency }} {{ (total_amount|default(0))|round(0) }}</h3>
+                    <p>Total Sales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-tachometer-alt fa-2x"></i>
+                    <h3>{{ low_stock_products|length }}</h3>
+                    <p>Low Stock Items</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                    <h3>{{ currency }} {{ (profit|default(0))|round(0) }}</h3>
+                    <p>Profit</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="shopTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#products">Products</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sales">Sales</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#lowstock">Low Stock</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#reports">Reports</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Products Tab -->
+        <div class="tab-pane fade show active" id="products">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <span>Product List</span>
+                    <a href="{{ url_for('add_product', shop_id=shop.id) }}" class="btn btn-sm btn-light">Add Product</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr><th>Name</th><th>Price</th><th>Stock</th><th>Unit</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for p in products %}
+                                <tr>
+                                    <td>{{ p.name }}</td>
+                                    <td>{{ currency }} {{ p.price|round(0) }}</td>
+                                    <td>{% if p.quantity <= p.low_stock_threshold %}<span class="badge bg-warning">{{ p.quantity }}</span>{% else %}{{ p.quantity }}{% endif %} {{ p.unit }}</td>
+                                    <td>{{ p.unit }}</td>
+                                    <td>
+                                        <a href="{{ url_for('edit_product', shop_id=shop.id, product_id=p.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                        <a href="{{ url_for('delete_product', shop_id=shop.id, product_id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Del</a>
+                                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#stockModal{{ p.id }}">Adjust</button>
+                                        <div class="modal fade" id="stockModal{{ p.id }}">
+                                            <div class="modal-dialog"><div class="modal-content">
+                                                <div class="modal-header"><h5>{{ p.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                                <form method="POST" action="{{ url_for('adjust_stock', shop_id=shop.id, product_id=p.id) }}">
+                                                    <div class="modal-body">
+                                                        <input type="number" step="0.01" name="quantity" class="form-control" required>
+                                                        <textarea name="note" class="form-control mt-2" placeholder="Reason"></textarea>
+                                                    </div>
+                                                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Apply</button></div>
+                                                </form>
+                                            </div></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5">No products yet. Click "Add Product".</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Tab -->
+        <div class="tab-pane fade" id="sales">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <span>Recent Sales</span>
+                    <a href="{{ url_for('sell', shop_id=shop.id) }}" class="btn btn-sm btn-light">New Sale</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Total</th><th>Profit</th></tr></thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ sale.product.name if sale.product else 'Deleted' }}</td>
+                                    <td>{{ sale.quantity }}</td>
+                                    <td>{{ currency }} {{ (sale.total_amount|default(0))|round(0) }}</td>
+                                    <td>{{ currency }} {{ (sale.profit|default(0))|round(0) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5">No sales recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Tab -->
+        <div class="tab-pane fade" id="lowstock">
+            <div class="card">
+                <div class="card-header bg-warning">Low Stock Products</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>Name</th><th>Current Stock</th><th>Threshold</th><th>Action</th></tr></thead>
+                            <tbody>
+                                {% for p in low_stock_products %}
+                                <tr>
+                                    <td>{{ p.name }}</td>
+                                    <td>{{ p.quantity }} {{ p.unit }}</td>
+                                    <td>{{ p.low_stock_threshold }} {{ p.unit }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#stockModal{{ p.id }}">Adjust Stock</button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4">All products are above threshold.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div class="tab-pane fade" id="reports">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card"><div class="card-body">
+                        <h5><i class="fas fa-chart-simple"></i> Sales Report</h5>
+                        <a href="{{ url_for('sales_report', shop_id=shop.id) }}" class="btn btn-outline-primary">View Report</a>
+                        <a href="{{ url_for('export_sales_pdf', shop_id=shop.id) }}" class="btn btn-outline-danger">Export PDF</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card"><div class="card-body">
+                        <h5><i class="fas fa-robot"></i> AI Forecast</h5>
+                        <a href="{{ url_for('ai_forecast', shop_id=shop.id) }}" class="btn btn-outline-primary">View Forecast</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card"><div class="card-body">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Anomaly History</h5>
+                        <a href="{{ url_for('anomaly_history', shop_id=shop.id) }}" class="btn btn-outline-primary">View Anomalies</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card"><div class="card-body">
+                        <h5><i class="fas fa-file-invoice-dollar"></i> Tax Reminder</h5>
+                        <a href="{{ url_for('tax_reminder', shop_id=shop.id) }}" class="btn btn-outline-primary">View Tax Info</a>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyShopLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => alert("Shop link copied!")).catch(() => alert("Failed to copy."));
+    }
+</script>
+{% endblock %}
