@@ -298,22 +298,7 @@ def create_shop():
         return redirect(url_for('manage_shop', shop_id=shop.id))
     return render_template('create_shop.html')
 
-@app.route('/shop/<int:shop_id>')
-@login_required
-def manage_shop(shop_id):
-    shop = Shop.query.get_or_404(shop_id)
-    if shop.owner_id != current_user.id and not current_user.is_admin:
-        flash('Access denied', 'danger')
-        return redirect(url_for('dashboard'))
-    products = Product.query.filter_by(shop_id=shop.id).all()
-    recent_sales = Sale.query.filter_by(shop_id=shop.id).order_by(Sale.created_at.desc()).limit(20).all()
-    low_stock_products = [p for p in products if p.quantity <= p.low_stock_threshold]
-    total_sales = db.session.query(db.func.sum(Sale.total_amount)).filter(Sale.shop_id==shop.id).scalar() or 0
-    total_profit = db.session.query(db.func.sum(Sale.profit)).filter(Sale.shop_id==shop.id).scalar() or 0
-    return render_template('shop_dashboard.html',
-                           shop=shop, products=products, recent_sales=recent_sales,
-                           low_stock_products=low_stock_products,
-                           total_sales=total_sales, total_profit=total_profit)
+
 @app.route('/shop/<int:shop_id>/product/add', methods=['GET', 'POST'])
 @login_required
 def add_product(shop_id):
