@@ -106,7 +106,7 @@ class Comment(db.Model):
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_approved = db.Column(db.Boolean, default=True)
-    class AnomalyLog(db.Model):
+class AnomalyLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     shop_id = db.Column(db.Integer, db.ForeignKey('shop.id'))
     date = db.Column(db.Date, nullable=False)
