@@ -11,12 +11,26 @@
         <div class="col-md-8 text-center">
             <div class="card shadow-lg">
                 <div class="card-body">
-                    <canvas id="snakeCanvas" width="400" height="400" class="border rounded mx-auto d-block" style="background-color: #111;"></canvas>
+                    <canvas id="snakeCanvas" width="400" height="400" class="border rounded mx-auto d-block" style="background-color: #111; max-width: 100%; height: auto; touch-action: none;"></canvas>
                     <div class="mt-3">
                         <h3>Score: <span id="score">0</span></h3>
                         <button id="restartBtn" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Restart</button>
                     </div>
-                    <p class="mt-3 text-muted">Use arrow keys (← ↑ ↓ →) to control the snake.</p>
+                    
+                    <!-- On‑screen control buttons (touch‑friendly, no scroll) -->
+                    <div class="d-flex justify-content-center mt-3">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-dark control-btn" data-dir="UP" style="touch-action: manipulation;">▲</button>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center mt-2">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-dark control-btn" data-dir="LEFT" style="touch-action: manipulation;">◀</button>
+                            <button class="btn btn-dark control-btn" data-dir="DOWN" style="touch-action: manipulation;">▼</button>
+                            <button class="btn btn-dark control-btn" data-dir="RIGHT" style="touch-action: manipulation;">▶</button>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-muted">Use arrow keys on keyboard, or tap the buttons above. The page will not scroll while playing.</p>
                 </div>
             </div>
         </div>
@@ -142,9 +156,9 @@
             draw();
         }
         
+        // Keyboard controls with scroll prevention
         function handleKeydown(e) {
             const key = e.key;
-            // Prevent page scrolling with arrow keys
             if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
                 e.preventDefault();
             }
@@ -160,12 +174,37 @@
             }
         }
         
+        // On‑screen button controls (prevent default and touch scrolling)
+        function setupButtons() {
+            const btns = document.querySelectorAll('.control-btn');
+            btns.forEach(btn => {
+                const prevent = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!gameRunning) return;
+                    const dir = this.getAttribute('data-dir');
+                    if (dir === 'RIGHT' && direction !== 'LEFT') nextDirection = 'RIGHT';
+                    else if (dir === 'LEFT' && direction !== 'RIGHT') nextDirection = 'LEFT';
+                    else if (dir === 'UP' && direction !== 'DOWN') nextDirection = 'UP';
+                    else if (dir === 'DOWN' && direction !== 'UP') nextDirection = 'DOWN';
+                };
+                btn.addEventListener('click', prevent);
+                btn.addEventListener('touchstart', prevent, { passive: false });
+            });
+        }
+        
+        // Also prevent touch scrolling on canvas
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
         function init() {
             food = randomFood();
             draw();
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(update, 100);
             window.addEventListener('keydown', handleKeydown);
+            setupButtons();
             document.getElementById('restartBtn').addEventListener('click', () => {
                 restartGame();
             });
@@ -174,4 +213,32 @@
         init();
     })();
 </script>
+
+<style>
+    .control-btn {
+        font-size: 1.8rem;
+        width: 70px;
+        height: 70px;
+        margin: 0 5px;
+        border-radius: 50%;
+        background-color: #333;
+        color: white;
+        border: none;
+        transition: 0.1s;
+        touch-action: manipulation;  /* prevents zoom on double-tap */
+        user-select: none;
+    }
+    .control-btn:active {
+        transform: scale(0.95);
+        background-color: var(--accent, #ffd700);
+        color: black;
+    }
+    @media (max-width: 500px) {
+        .control-btn {
+            width: 55px;
+            height: 55px;
+            font-size: 1.4rem;
+        }
+    }
+</style>
 {% endblock %}
