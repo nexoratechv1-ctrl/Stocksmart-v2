@@ -99,23 +99,7 @@ class StockHistory(db.Model):
     note = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_approved = db.Column(db.Boolean, default=True)
-class AnomalyLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey('shop.id'))
-    date = db.Column(db.Date, nullable=False)
-    anomaly_type = db.Column(db.String(20))
-    severity = db.Column(db.Float)
-    expected_sales = db.Column(db.Float)
-    actual_sales = db.Column(db.Float)
-    notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class HelpMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
