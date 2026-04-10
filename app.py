@@ -148,7 +148,13 @@ def fc(sid):
     df['d']=pd.to_datetime(df['d']); df=df.sort_values('d'); df['n']=(df['d']-df['d'].min()).dt.days
     m=LinearRegression().fit(df[['n']].values,df['s'].values)
     return m,df['d'].max()
+@app.route('/manifest.json')
+def manifest():
+    return app.send_static_file('manifest.json')
 
+@app.route('/service-worker.js')
+def sw():
+    return app.send_static_file('service-worker.js', mimetype='application/javascript')
 @app.route('/')
 def i(): return render_template('index.html')
 
